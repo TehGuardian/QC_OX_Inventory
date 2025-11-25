@@ -72,13 +72,17 @@ A complete inventory system for RedM, implementing items, weapons, shops, stashe
    ```
    Download the latest release and extract to your resources folder
    ```
+2. **Rename Script**
+   ```
+    Rename QC_OX_Inventory to be ox_inventory
+   ```
 
-2. **Database Setup**
+3. **Database Setup**
    ```sql
    -- Import the provided SQL file (see INSTALLATION folder)
    ```
 
-3. **RSG Core Money Items Fix** (RSG Framework Only)
+4. **RSG Core Money Items Fix** (RSG Framework Only)
 
    ⚠️ **CRITICAL**: If using RSG Core, you MUST replace the `moneyitems.lua` file for proper functionality.
 
@@ -93,27 +97,27 @@ A complete inventory system for RedM, implementing items, weapons, shops, stashe
    - Money synchronization problems
    - Player initialization timing issues
 
-4. **Configure**
+5. **Configure**
    ```lua
    -- Edit data/items.lua, data/shops.lua, etc. to match your server needs
    -- Configure fxmanifest.lua if needed
    ```
 
-5. **Build UI** (if modifying web files)
+6. **Build UI** (if modifying web files)
    ```bash
    cd web
    npm install
    npm run build
    ```
 
-6. **Add to server.cfg**
+7. **Add to server.cfg**
    ```
    ensure ox_lib
    ensure ox_target  # Optional
    ensure ox_inventory
    ```
 
-7. **Restart Server** (Complete server restart, not just resource restart)
+8. **Restart Server** (Complete server restart, not just resource restart)
 
 ---
 
