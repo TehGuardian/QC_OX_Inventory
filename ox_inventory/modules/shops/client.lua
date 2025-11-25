@@ -97,6 +97,12 @@ local function wipeShops()
 		if shop.blip then
 			RemoveBlip(shop.blip)
 		end
+
+		if shop.prompt then
+			PromptSetEnabled(shop.prompt, false)
+			PromptSetVisible(shop.prompt, false)
+			shop.prompt = nil
+		end
 	end
 
 	table.wipe(shops)
@@ -180,12 +186,15 @@ local function refreshShops()
 				end
 			end
 		elseif shop.locations then
+			-- Standalone mode: Use native RedM prompts
 			if not hasShopAccess(shop) then goto skipLoop end
-            local shopPrompt = { icon = 'fas fa-shopping-basket' }
 
 			for i = 1, #shop.locations do
 				local coords = shop.locations[i]
 				id += 1
+
+				-- Register native RedM prompt
+				local prompt = Utils.RegisterPrompt(label, 0x760A9C6F, true)
 
 				shops[id] = lib.points.new(coords, 16, {
 					coords = coords,
@@ -193,12 +202,29 @@ local function refreshShops()
 					inv = 'shop',
 					invId = i,
 					type = type,
-                    marker = client.shopmarker,
-                    prompt = {
-                        options = shop.icon and { icon = shop.icon } or shopPrompt,
-                        message = ('**%s**  \n%s'):format(label, locale('interact_prompt', GetControlInstructionalButton(0, 38, true):sub(3)))
-                    },
-					nearby = Utils.nearbyMarker,
+					prompt = prompt,
+					nearby = function(point)
+						if point.isClosest and point.currentDistance < 1.5 then
+							if point.prompt then
+								PromptSetEnabled(point.prompt, true)
+								PromptSetVisible(point.prompt, true)
+
+								if PromptHasHoldModeCompleted(point.prompt) then
+									client.openInventory('shop', { id = point.invId, type = point.type })
+									Wait(500)
+								end
+							end
+						elseif point.prompt then
+							PromptSetEnabled(point.prompt, false)
+							PromptSetVisible(point.prompt, false)
+						end
+					end,
+					onExit = function(point)
+						if point.prompt then
+							PromptSetEnabled(point.prompt, false)
+							PromptSetVisible(point.prompt, false)
+						end
+					end,
 					blip = blip and createBlip(blip, coords)
 				})
 			end

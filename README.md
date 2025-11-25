@@ -1,65 +1,233 @@
-# ox_inventory
+# 📦 QC_OX_Inventory
 
-A complete inventory system for FiveM, implementing items, weapons, shops, and more without any strict framework dependency.
+A complete inventory system for RedM, implementing items, weapons, shops, stashes, and advanced features with multi-framework support.
 
-![](https://img.shields.io/github/downloads/communityox/ox_inventory/total?logo=github)
-![](https://img.shields.io/github/downloads/communityox/ox_inventory/latest/total?logo=github)
-![](https://img.shields.io/github/contributors/communityox/ox_inventory?logo=github)
-![](https://img.shields.io/github/v/release/communityox/ox_inventory?logo=github)
+> ⚠️ **Work In Progress**: This is an active development fork of ox_inventory adapted for RedM. Features are being added and refined.
 
-## 📚 Documentation
+---
 
-https://coxdocs.dev/ox_inventory
+## 📋 Features
 
-## 💾 Download
+### Core System
+- **Server-side Security**: All interactions with items, shops, and stashes are validated server-side
+- **Multi-Framework Support**: Compatible with RSG, VORP, QRCore, and RedEM:RP frameworks
+- **Fully Synchronized**: Multiple players can access the same inventory simultaneously
+- **Logging System**: Comprehensive event logging for purchases, item movement, creation, and removal
+- **ox_target Integration**: Full support for ox_target interaction system
+- **Native Prompts**: Standalone mode uses native RedM prompts for interactions
 
-https://github.com/communityox/ox_inventory/releases/latest/download/ox_inventory.zip
-
-## Supported frameworks
-
-We do not guarantee compatibility or support for third-party resources.
-
-- [ox_core](https://github.com/communityox/ox_core)
-- [esx](https://github.com/esx-framework/esx_core)
-- [qbox](https://github.com/Qbox-project/qbx_core)
-- [nd_core](https://github.com/ND-Framework/ND_Core)
-
-## ✨ Features
-
-- Server-side security ensures interactions with items, shops, and stashes are all validated.
-- Logging for important events, such as purchases, item movement, and item creation or removal.
-- Supports player-owned vehicles, licenses, and group systems implemented by frameworks.
-- Fully synchronised, allowing multiple players to [access the same inventory](https://user-images.githubusercontent.com/65407488/230926091-c0033732-d293-48c9-9d62-6f6ae0a8a488.mp4).
-
-### Items
-
-- Inventory items are stored per-slot, with customisable metadata to support item uniqueness.
-- Overrides default weapon-system with weapons as items.
-- Weapon attachments and ammo system, including special ammo types.
-- Durability, allowing items to be depleted or removed overtime.
-- Internal item system provides secure and easy handling for item use effects.
-- Compatibility with 3rd party framework item registration.
+### Items & Weapons
+- **Slot-Based Storage**: Items stored per-slot with customizable metadata for uniqueness
+- **RedM Weapon System**: Complete RDR3 weapon implementation with dual-wield support
+- **Weapon Attachments**: Full attachment and component system
+- **Ammunition Types**: Support for various ammo types including special ammunition
+- **Durability System**: Items can degrade or be depleted over time
+- **Item Effects**: Secure internal item system for use effects
+- **Framework Compatibility**: Works with 3rd party framework item registration
 
 ### Shops
+- **Access Control**: Group and license-based restrictions
+- **Multi-Currency**: Support for different currencies (cash, black money, gold, etc.)
+- **Dynamic Pricing**: Per-item pricing and stock management
+- **Interaction Modes**: ox_target zones or native RedM prompts
 
-- Restricted access based on groups and licenses.
-- Support different currency for items (black money, poker chips, etc).
+### Storage
+- **Personal Stashes**: Player-specific storage with identifier linking
+- **Group Restrictions**: Job/gang-based access control
+- **Dynamic Registration**: Create new stashes from any resource
+- **Container Items**: Access stashes through items like paperbags or backpacks
+- **Vehicle Storage**: Glovebox and trunk access for vehicles (horses, wagons, etc.)
+- **Random Loot**: Item generation in dumpsters and unowned vehicles
 
-### Stashes
+### RedM-Specific Features
+- **Dual-Wield System**: Support for dual-wielding pistols and revolvers (WIP)
+- **Weapon Wheel Toggle**: Optional disable/enable of native weapon wheel
+- **Horse & Wagon Inventory**: UUID-based storage for mounts and vehicles
+- **RDR3 Natives**: Optimized for Red Dead Redemption 3 (RedM)
+- **Western UI Theme**: Custom RedM-styled interface with period-appropriate fonts
 
-- Personal stashes, linking a stash with a specific identifier or creating per-player instances.
-- Restricted access based on groups.
-- Registration of new stashes from any resource.
-- Containers allow access to stashes when using an item, like a paperbag or backpack.
-- Access gloveboxes and trunks for any vehicle.
-- Random item generation inside dumpsters and unowned vehicles.
+## 🎨 UI Features
 
-## Copyright
+- **React 18 + TypeScript**: Modern frontend stack
+- **Custom RedM Theme**: Western-styled UI with authentic fonts
+- **Responsive Design**: Adaptive layout for different screen sizes
+- **Item Notifications**: Visual feedback for item actions
+- **Drag & Drop**: Intuitive item movement
+- **Hotbar System**: Quick access weapon/item slots
 
-Copyright © 2024 Overextended <https://github.com/overextended>
+---
+
+## ⚙️ Installation
+
+### Prerequisites
+- RedM server
+- One of the supported frameworks (RSG, VORP, QRCore, or RedEM:RP)
+- MySQL database
+- ox_lib
+- ox_target (optional, but recommended)
+
+### Steps
+
+1. **Download & Extract**
+   ```
+   Download the latest release and extract to your resources folder
+   ```
+
+2. **Database Setup**
+   ```sql
+   -- Import the provided SQL file (see INSTALLATION folder)
+   ```
+
+3. **RSG Core Money Items Fix** (RSG Framework Only)
+
+   ⚠️ **CRITICAL**: If using RSG Core, you MUST replace the `moneyitems.lua` file for proper functionality.
+
+   ```
+   Copy: ox_inventory/INSTALLATION/moneyitems.lua
+   To: rsg-core/server/moneyitems.lua
+   ```
+
+   This fixes:
+   - AddItem nil errors
+   - Circular dependency issues
+   - Money synchronization problems
+   - Player initialization timing issues
+
+4. **Configure**
+   ```lua
+   -- Edit data/items.lua, data/shops.lua, etc. to match your server needs
+   -- Configure fxmanifest.lua if needed
+   ```
+
+5. **Build UI** (if modifying web files)
+   ```bash
+   cd web
+   npm install
+   npm run build
+   ```
+
+6. **Add to server.cfg**
+   ```
+   ensure ox_lib
+   ensure ox_target  # Optional
+   ensure ox_inventory
+   ```
+
+7. **Restart Server** (Complete server restart, not just resource restart)
+
+---
+
+## 🔧 Configuration
+
+### Shared Config (init.lua)
+- `weaponWheel`: Toggle weapon wheel (RedM only)
+- `dropmodel`: Default drop bag model
+- `target`: Enable/disable ox_target integration
+
+### Framework Setup
+The script auto-detects your framework. Ensure your bridge files are properly configured in `modules/bridge/`.
+
+### Shop System
+- **With ox_target**: Uses zones and models defined in `data/shops.lua`
+- **Standalone**: Uses native RedM prompts at location coordinates
+
+---
+
+## 📚 Data Files
+
+All configuration is done through Lua data files in the `data/` folder:
+
+- **items.lua**: Item definitions and properties
+- **weapons.lua**: FiveM weapon data (legacy)
+- **weapons_RDR3.lua**: RedM weapon definitions
+- **shops.lua**: Shop locations and inventory
+- **stashes.lua**: Static storage locations
+- **vehicles.lua**: Vehicle storage capacity
+- **containers.lua**: Portable container definitions
+- **crafting.lua**: Crafting bench and recipe data
+- **evidence.lua**: Police evidence locker locations
+- **licenses.lua**: License purchase locations
+
+Each file contains detailed inline documentation.
+
+
+## 🌐 Multi-Framework Support
+
+Currently supported frameworks within RedM:
+
+| Framework | Status | Notes |
+|-----------|--------|-------|
+| RSG | ✅ Full Support | Primary development framework |
+| VORP | 🚧 Planned | Bridge structure in place |
+| QRCore | 🚧 Planned | Bridge structure in place |
+| RedEM:RP | 🚧 Planned | Bridge structure in place |
+
+---
+
+## 🔄 Differences from Original ox_inventory
+
+This is a RedM-focused fork with the following changes:
+
+1. **RedM Focus**: A fully optimized ox_inventory for RedM
+2. **Dual-Wield Weapons**: Implementation for revolvers/pistols (Work in Progress)
+3. **Native Prompts**: Standalone mode uses RedM's native prompt system
+4. **Western UI**: Completely redesigned theme with RedM aesthetics
+5. **Horse/Wagon Storage**: UUID-based vehicle inventory system
+6. **Multi-Framework**: Support for multiple RedM frameworks (in progress)
+
+---
+
+## 📝 Development Status
+
+- ✅ Core inventory system
+- ✅ RedM weapon system
+- 🚧 Dual-wield weapon support (in progress)
+- ✅ Shop system (ox_target + native prompts)
+- ✅ Vehicle storage (horses, wagons)
+- ✅ Container system
+- ✅ Crafting system
+- ✅ Western UI theme
+- 🚧 Additional framework bridges (VORP, QRCore, RedEM:RP)
+- 🚧 Advanced features and optimizations
+- 🚧 Documentation expansion
+
+---
+
+## 🤝 Credits
+
+**Original ox_inventory**:
+- Copyright © 2024 Overextended <https://github.com/overextended>
+- Original repository: https://github.com/communityox/ox_inventory
+- Documentation: https://coxdocs.dev/ox_inventory
+
+**RedM Adaptation**:
+- Quantum Projects Development Team
+- Community contributors
+
+---
+
+## 📄 License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+## 🐛 Support
+
+This is an unofficial RedM adaptation. For support:
+- **Quantum Projects Discord**: https://discord.gg/kJ8ZrGM8TS
+- Check inline code documentation
+- Review data file examples
+- Understand that this is work-in-progress
+
+For original ox_inventory documentation:
+- https://coxdocs.dev/ox_inventory
+- https://github.com/communityox/ox_inventory
+
+---
+
+**Made with ❤️ for the RedM community**

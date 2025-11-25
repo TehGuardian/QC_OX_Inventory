@@ -242,5 +242,22 @@ function Utils.blurOut()
     TriggerScreenblurFadeOut(250)
 end
 
+---Register a native RedM prompt (standalone mode)
+---@param label string Display text for the prompt
+---@param control number Control action hash (default: 0x760A9C6F for E key)
+---@param holdMode boolean Use hold mode (default: true)
+---@return number prompt The registered prompt handle
+function Utils.RegisterPrompt(label, control, holdMode)
+    local prompt = PromptRegisterBegin()
+    PromptSetControlAction(prompt, control or 0x760A9C6F)
+    local str = CreateVarString(10, 'LITERAL_STRING', label)
+    PromptSetText(prompt, str)
+    PromptSetEnabled(prompt, false)
+    PromptSetVisible(prompt, false)
+    PromptSetHoldMode(prompt, holdMode ~= false)
+    PromptRegisterEnd(prompt)
+    return prompt
+end
+
 
 return Utils

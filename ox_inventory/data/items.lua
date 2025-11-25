@@ -1,3 +1,30 @@
+--[[
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                               ║
+║                           📦 OX INVENTORY - ITEMS DATABASE 📦                                                ║
+║                                                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                               ║
+║  Define all usable items and their properties                                                                 ║
+║  Multi-Framework: RSG, VORP, QRCore, RedEM:RP                                                                 ║
+║                                                                                                               ║
+║  📋 PROPERTIES 📋                                                                                            ║
+║    • label     Display name                                                                                   ║
+║    • weight    Weight in grams                                                                                ║
+║    • stack     Can stack (default: true)                                                                      ║
+║    • close     Close inventory on use (default: true)                                                         ║
+║    • consume   Durability loss per use (0-1, default: 1 to consume)                                           ║
+║                                                                                                               ║
+║  📋 CLIENT PROPERTIES 📋                                                                                     ║
+║    • status    Status effects {hunger/thirst = amount}                                                        ║
+║    • anim      Animation dict/clip or reference                                                               ║
+║    • prop      Prop model with pos/rot offsets                                                                ║
+║    • usetime   Use duration in milliseconds                                                                   ║
+║    • export    Client export function to call                                                                 ║
+║                                                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+--]]
+
 return {
 	['testburger'] = {
 		label = 'Test Burger',

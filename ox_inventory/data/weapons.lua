@@ -1,3 +1,33 @@
+--[[
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                               ║
+║                           🔫 OX INVENTORY - WEAPONS & COMPONENTS 🔫                                          ║
+║                                                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                               ║
+║  Define weapons, attachments, and ammunition                                                                  ║
+║  Multi-Framework: RSG, VORP, QRCore, RedEM:RP                                                                 ║
+║                                                                                                               ║
+║  📋 WEAPON PROPERTIES 📋                                                                                     ║
+║    • label      Display name                                                                                  ║
+║    • weight     Weight in grams                                                                               ║
+║    • durability Damage per shot (lower = more durable)                                                        ║
+║    • ammoname   Compatible ammo type                                                                          ║
+║    • throwable  Throwable weapon flag                                                                         ║
+║                                                                                                               ║
+║  📋 COMPONENT PROPERTIES 📋                                                                                  ║
+║    • label      Display name                                                                                  ║
+║    • weight     Weight in grams                                                                               ║
+║    • type       Component category (flashlight, muzzle, magazine, sight, etc)                                 ║
+║    • component  Array of compatible component hashes                                                          ║
+║                                                                                                               ║
+║  📋 AMMO PROPERTIES 📋                                                                                       ║
+║    • label      Display name                                                                                  ║
+║    • weight     Weight per round in grams                                                                     ║
+║                                                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+--]]
+
 return {
 	Weapons = {
 		['WEAPON_BATTLERIFLE'] = {
