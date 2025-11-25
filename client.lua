@@ -7,6 +7,13 @@ local Utils = require 'modules.utils.client'
 local Weapon = require 'modules.weapon.client'
 local currentWeapon
 
+-- RedM weapon cooldown system
+local unarmedHash   = -1569615261
+local heldWeapon    = nil
+local heldWeaponInfo= nil
+local lastUseTime   = 0
+local cooldown      = 1000 -- 1 second cooldown (in ms)
+
 exports('getCurrentWeapon', function()
 	return currentWeapon
 end)
@@ -118,6 +125,17 @@ local Inventory = require 'modules.inventory.client'
 ---@return boolean?
 function client.openInventory(inv, data)
 	if invOpen then
+
+		if IS_RDR3 and type(data) == "table" then
+			local entity = NetworkGetEntityFromNetworkId(data.netid)
+
+			if inv == "glovebox" then
+				if DoesEntityExist(entity) and not Citizen.InvokeNative(0xAAB0FE202E9FC9F0, entity, -1) then
+					return client.closeInventory()
+				end
+			end
+		end
+
 		if not inv and currentInventory.type == 'newdrop' then
 			return client.closeInventory()
 		end
@@ -518,7 +536,17 @@ local function useSlot(slot, noAnim)
 			if IsCinematicCamRendering() then SetCinematicModeActive(false) end
 
 			if currentWeapon then
-                if not currentWeapon.timer or currentWeapon.timer ~= 0 then return end
+				if IS_RDR3 then
+					if currentWeapon?.slot == data.slot then
+						-- Just keep it in the holster if it's not a throwable
+						local keepHolstered = data.throwable ~= true
+						currentWeapon = Weapon.Disarm(currentWeapon, IS_RDR3, keepHolstered)
+						heldWeapon = nil
+						heldWeaponInfo = nil
+						return
+					end
+				end
+				if not currentWeapon.timer or currentWeapon.timer ~= 0 then return end
 
 				local weaponSlot = currentWeapon.slot
 				currentWeapon = Weapon.Disarm(currentWeapon)
@@ -526,24 +554,44 @@ local function useSlot(slot, noAnim)
 				if weaponSlot == data.slot then return end
 			end
 
-            GiveWeaponToPed(playerPed, data.hash, 0, false, true)
-            SetCurrentPedWeapon(playerPed, data.hash, false)
+			if IS_RDR3 then
+				if not HasPedGotWeapon(playerPed, data.hash, 0, false) then
+					local currentWeaponAmmo = GetAmmoInPedWeapon(playerPed, data.hash)
 
-            if data.hash ~= GetSelectedPedWeapon(playerPed) then
-                lib.print.info(('failed to equip %s (cause unknown)'):format(item.name))
-                return lib.notify({ type = 'error', description = locale('cannot_use', data.label) })
-            end
+					-- RemoveAmmoFromPed
+					Citizen.InvokeNative(0xF4823C813CB8277D, playerPed, data.hash, currentWeaponAmmo, `REMOVE_REASON_DEBUG`)
 
-            RemoveWeaponFromPed(cache.ped, data.hash)
+					-- GiveWeaponToPed
+					if data.throwable then
+						Citizen.InvokeNative(0xB282DC6EBD803C75, playerPed, data.hash, tonumber(item.count), true, 0) -- GIVE_DELAYED_WEAPON_TO_PED
+					else
+						Citizen.InvokeNative(0xB282DC6EBD803C75, playerPed, data.hash, item.metadata.ammo, true, 0) -- GIVE_DELAYED_WEAPON_TO_PED
+					end
+				end
+			end
+
+			if IS_RDR3 then
+				SetCurrentPedWeapon(cache.ped, data.hash, false, 0, false, false)
+			else
+				GiveWeaponToPed(playerPed, data.hash, 0, false, true)
+				SetCurrentPedWeapon(playerPed, data.hash, false)
+
+				if data.hash ~= GetSelectedPedWeapon(playerPed) then
+					lib.print.info(('failed to equip %s (cause unknown)'):format(item.name))
+					return lib.notify({ type = 'error', description = locale('cannot_use', data.label) })
+				end
+
+				RemoveWeaponFromPed(cache.ped, data.hash)
+			end
 
 			useItem(data, function(result)
 				if result then
                     local sleep
-					currentWeapon, sleep = Weapon.Equip(item, data, noAnim)
+					currentWeapon, sleep = Weapon.Equip(item, data, noAnim or IS_RDR3)
 
 					if sleep then Wait(sleep) end
 				end
-			end, noAnim)
+			end, noAnim or IS_RDR3)
 		elseif currentWeapon then
 			if data.ammo then
 				if EnableWeaponWheel or currentWeapon.metadata.durability <= 0 then return end
@@ -553,6 +601,13 @@ local function useSlot(slot, noAnim)
 				local _, maxAmmo = GetMaxAmmo(playerPed, currentWeapon.hash)
 
 				if maxAmmo < clipSize then clipSize = maxAmmo end
+
+				if IS_RDR3 then
+					local isABow = string.find(string.lower(currentWeapon.name), "bow") ~= nil
+					if isABow then
+						clipSize = 25
+					end
+				end
 
 				if currentAmmo == clipSize then return end
 
@@ -750,10 +805,23 @@ local function registerCommands()
 		local vehicleClass = GetVehicleClass(vehicle)
 		local checkVehicle = Vehicles.Storage[vehicleHash]
 
+		local gloveId
+
+		if IS_RDR3 then
+			local horseUUID = Entity(vehicle).state.horseUUID
+
+			if not horseUUID then
+				-- Horse is not part of our system
+				return
+			end
+
+			gloveId = ('glove%d'):format(horseUUID)
+		end
+
 		-- No storage or no glovebox
 		if (checkVehicle == 0 or checkVehicle == 2) or (not Vehicles.glovebox[vehicleClass] and not Vehicles.glovebox.models[vehicleHash]) then return end
 
-		local isOpen = client.openInventory('glovebox', { netid = NetworkGetNetworkIdFromEntity(vehicle) })
+		local isOpen = client.openInventory('glovebox', { id = gloveId, netid = NetworkGetNetworkIdFromEntity(vehicle) })
 
 		if isOpen then
 			currentInventory.entity = vehicle
@@ -871,6 +939,61 @@ local function registerCommands()
 				useSlot(i)
 			end
 		})
+	end
+
+	-- RedM-specific hotkey control mapping
+	if IS_RDR3 then
+		local function useHotKeyByControl(key)
+			if not IsEntityDead(PlayerPedId()) and not IsPauseMenuActive() then
+				if not invOpen then
+					CreateThread(function()
+						useSlot(key)
+					end)
+				end
+			end
+		end
+
+		Citizen.CreateThread(function()
+			local HOTKEY_CONTROL_MAPPING = {
+				{ 1, { `INPUT_SELECT_QUICKSELECT_SIDEARMS_LEFT`, `INPUT_EMOTE_DANCE` } },
+				{ 2, { `INPUT_EMOTE_GREET` } },
+				{ 3, { `INPUT_SELECT_QUICKSELECT_SIDEARMS_RIGHT`, `INPUT_EMOTE_COMM` } },
+				{ 4, { `INPUT_EMOTE_TAUNT` } },
+				{ 5, { `INPUT_SELECT_QUICKSELECT_MELEE_NO_UNARMED` } },
+			}
+
+			while true do
+				Citizen.Wait(0)
+
+				if PlayerData then
+					for _, mapping in ipairs(HOTKEY_CONTROL_MAPPING) do
+						local controlHashes = mapping[2]
+
+						for _, controlHash in ipairs(controlHashes) do
+							DisableControlAction(0, controlHash, true)
+							if IsDisabledControlJustPressed(0, controlHash) then
+								local hotkey = mapping[1]
+								useHotKeyByControl(hotkey)
+								goto skip_hotkey_processing
+							end
+						end
+					end
+
+					::skip_hotkey_processing::
+
+					if not client.weaponWheel then
+						DisableControlAction(0, 'INPUT_OPEN_WHEEL_MENU', true)
+						DisableControlAction(0, 'INPUT_TWIRL_PISTOL', true)
+					end
+
+					if IsDisabledControlJustPressed(0, `INPUT_GAME_MENU_TAB_LEFT_SECONDARY`) then
+						if not client.weaponWheel and not IsPauseMenuActive() then
+							SendNUIMessage({ action = 'toggleHotbar' })
+						end
+					end
+				end
+			end
+		end)
 	end
 
 	registerCommands = nil
@@ -1790,6 +1913,24 @@ end)
 
 local swapActive = false
 
+local function swapWeaponHotbar(item, data)
+	if IS_RDR3 then
+		if string.find(string.lower(item.name), "weapon") then
+			if data.fromType == "player" then
+				if data.fromSlot > 0 and data.fromSlot < 6 then
+					local playerPed = PlayerPedId()
+					local weaponHash = GetHashKey(item.name)
+					local ammoHash = GetPedAmmoTypeFromWeapon(playerPed, weaponHash)
+					local weaponAmmo = GetAmmoInPedWeapon(playerPed, item.hash)
+
+					Citizen.InvokeNative(0xB6CFEC32E3742779, playerPed, ammoHash, weaponAmmo, GetHashKey('REMOVE_REASON_DROPPED'))
+					RemoveWeaponFromPed(playerPed, weaponHash)
+				end
+			end
+		end
+	end
+end
+
 ---Synchronise and validate all item movement between the NUI and server.
 RegisterNUICallback('swapItems', function(data, cb)
     if swapActive or not invOpen or invBusy or usingItem then return cb(false) end
@@ -1823,6 +1964,10 @@ RegisterNUICallback('swapItems', function(data, cb)
 		else
 			data.coords = coords
 		end
+
+		if shared.persistent_items then
+			data.coords = exports["persistent-items"]:getFromCoordsFromPlayer(coords)
+		end
     end
 
 	if currentInstance then
@@ -1841,6 +1986,16 @@ RegisterNUICallback('swapItems', function(data, cb)
 	cb(success or false)
 
 	if success then
+		-- Remove weapon completely from player if removed from hotbar (RedM)
+		if IS_RDR3 then
+			local itemSlot = response and response?.items[1].item.slot or data.fromSlot
+			local item = PlayerData.inventory[itemSlot or data.fromSlot]
+
+			if item then
+				swapWeaponHotbar(item, data)
+			end
+		end
+
         if weaponSlot and currentWeapon then
             currentWeapon.slot = weaponSlot
         end

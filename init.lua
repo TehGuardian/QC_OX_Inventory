@@ -19,7 +19,8 @@ shared = {
     playerweight = GetConvarInt('inventory:weight', 30000),
     target = GetConvarInt('inventory:target', 0) == 1,
     police = json.decode(GetConvar('inventory:police', '["police", "sheriff"]')),
-    networkdumpsters = GetConvarInt('inventory:networkdumpsters', 0) == 1
+    networkdumpsters = GetConvarInt('inventory:networkdumpsters', 0) == 1,
+    persistent_items = GetConvarInt('inventory:persistent_items', 0) == 1 -- RedM only
 }
 
 shared.dropslots = GetConvarInt('inventory:dropslots', shared.playerslots)
@@ -40,6 +41,8 @@ do
 end
 
 if IsDuplicityVersion() then
+    IS_RDR3 = GetConvar('gamename') == 'rdr3'
+
     server = {
         bulkstashsave = GetConvarInt('inventory:bulkstashsave', 1) == 1,
         loglevel = GetConvarInt('inventory:loglevel', 1),
@@ -75,6 +78,7 @@ if IsDuplicityVersion() then
         server.accounts[accounts[i]] = 0
     end
 else
+    IS_RDR3 = GetGameName() == 'redm'
     PlayerData = {}
     client = {
         autoreload = GetConvarInt('inventory:autoreload', 0) == 1,
@@ -87,12 +91,13 @@ else
         itemnotify = GetConvarInt('inventory:itemnotify', 1) == 1,
         weaponnotify = GetConvarInt('inventory:weaponnotify', 1) == 1,
         imagepath = GetConvar('inventory:imagepath', 'nui://ox_inventory/web/images'),
-        dropprops = GetConvarInt('inventory:dropprops', 0) == 1,
-        dropmodel = joaat(GetConvar('inventory:dropmodel', 'prop_med_bag_01b')),
+        dropprops = GetConvarInt('inventory:dropprops', IS_RDR3 and 1 or 0) == 1,
+        dropmodel = joaat(GetConvar('inventory:dropmodel', IS_RDR3 and 'p_bag01x' or 'prop_med_bag_01b')),
         weaponmismatch = GetConvarInt('inventory:weaponmismatch', 1) == 1,
         ignoreweapons = json.decode(GetConvar('inventory:ignoreweapons', '[]')),
         suppresspickups = GetConvarInt('inventory:suppresspickups', 1) == 1,
-        disableweapons = GetConvarInt('inventory:disableweapons', 0) == 1,
+        disableweapons = IS_RDR3 and false or (GetConvarInt('inventory:disableweapons', 0) == 1),
+        weaponWheel = IS_RDR3 and (GetConvarInt('inventory:weaponWheel', 0) == 1) or nil,
         disablesetupnotification = GetConvarInt('inventory:disablesetupnotification', 0) == 1,
         enablestealcommand = GetConvarInt('inventory:enablestealcommand', 1) == 1,
     }

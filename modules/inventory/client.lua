@@ -90,11 +90,25 @@ function Inventory.OpenTrunk(entity)
 
     if not door then return end
 
+    local netId = NetworkGetNetworkIdFromEntity(entity)
+    local invId
+
+    if IS_RDR3 then
+        local vehicleUUID
+        if Entity(entity).state.wagonId then
+            vehicleUUID = Entity(entity).state.wagonId
+        else
+            vehicleUUID = "temp:" .. netId
+        end
+
+        invId = vehicleUUID
+    end
+
     local coords = GetEntityCoords(entity)
 
     TaskTurnPedToFaceCoord(cache.ped, coords.x, coords.y, coords.z, 0)
 
-    if not client.openInventory('trunk', { netid = NetworkGetNetworkIdFromEntity(entity), entityid = entity, door = door }) then return end
+    if not client.openInventory('trunk', { id = invId, netid = netId, entityid = entity, door = door }) then return end
 
     if type(door) == 'table' then
         for i = 1, #door do

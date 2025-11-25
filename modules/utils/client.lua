@@ -121,8 +121,14 @@ function Utils.WeaponWheel(state)
     if state == nil then state = EnableWeaponWheel end
 
     EnableWeaponWheel = state
-    SetWeaponsNoAutoswap(not state)
-    SetWeaponsNoAutoreload(not state)
+
+    if IS_RDR3 then
+        Citizen.InvokeNative(0x2A7B50E, not state) -- SetWeaponsNoAutoswap
+        Citizen.InvokeNative(0x311150E5, not state) -- SetWeaponsNoAutoreload
+    else
+        SetWeaponsNoAutoswap(not state)
+        SetWeaponsNoAutoreload(not state)
+    end
 
     if client.suppresspickups then
         -- CLEAR_PICKUP_REWARD_TYPE_SUPPRESSION | SUPPRESS_PICKUP_REWARD_TYPE
@@ -133,14 +139,24 @@ end
 exports('weaponWheel', Utils.WeaponWheel)
 
 function Utils.CreateBlip(settings, coords)
-    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
-    SetBlipSprite(blip, settings.id)
-    SetBlipDisplay(blip, 4)
-    SetBlipScale(blip, settings.scale)
-    SetBlipColour(blip, settings.colour)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName(settings.name)
-    EndTextCommandSetBlipName(blip)
+    local blip
+
+    if IS_RDR3 then
+        blip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, coords.x, coords.y, coords.z)
+        SetBlipSprite(blip, settings.id, 1)
+
+        local blipColor = settings.colour and GetHashKey(settings.colour) or `BLIP_MODIFIER_MP_COLOR_32`
+        Citizen.InvokeNative(0x662D364ABF16DE2F, blip, blipColor)
+    else
+        blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+        SetBlipSprite(blip, settings.id)
+        SetBlipDisplay(blip, 4)
+        SetBlipScale(blip, settings.scale)
+        SetBlipColour(blip, settings.colour)
+        SetBlipAsShortRange(blip, true)
+        BeginTextCommandSetBlipName(settings.name)
+        EndTextCommandSetBlipName(blip)
+    end
 
     return blip
 end
