@@ -37,6 +37,11 @@ Citizen.CreateThreadNow(function()
         playerColumn = 'citizenid'
         vehicleTable = 'player_vehicles'
         vehicleColumn = 'id'
+    elseif shared.framework == 'rsg' then
+        playerTable = 'players'
+        playerColumn = 'citizenid'
+        vehicleTable = 'player_horses'
+        vehicleColumn = 'id'
     else
         return
     end
