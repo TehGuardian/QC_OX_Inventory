@@ -1,6 +1,7 @@
 if not lib then return end
 
 local Inventory = {}
+local RSGCore = exports['rsg-core']:GetCoreObject()
 
 Inventory.Dumpsters = lib.array:new(218085040, 666561306, -58485588, -206690185, 1511880420, 682791951)
 
@@ -323,12 +324,12 @@ local textPrompts = {
     evidence = {
         options = { icon = 'fa-box-archive' },
         message = ('**%s**  \n%s'):format(locale('open_police_evidence'),
-            locale('interact_prompt', GetControlInstructionalButton(0, 38, true):sub(3)))
+            locale('interact_prompt', RSGCore.Shared.Keybinds['E']))
     },
     stash = {
         options = { icon = 'fa-warehouse' },
         message = ('**%s**  \n%s'):format(locale('open_stash'),
-            locale('interact_prompt', GetControlInstructionalButton(0, 38, true):sub(3)))
+            locale('interact_prompt', RSGCore.Shared.Keybinds['E']))
     }
 }
 
