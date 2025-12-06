@@ -42,7 +42,7 @@ local function syncMoneyToRSGCore(source)
     -- Update RSG Core money without triggering the money change event
     player.PlayerData.money.cash = totalCash
     player.PlayerData.money.bloodmoney = totalBloodMoney
-    
+
     -- Trigger HUD update
     TriggerClientEvent('hud:client:OnMoneyChange', source, 'cash', totalCash, false)
     TriggerClientEvent('hud:client:OnMoneyChange', source, 'bloodmoney', totalBloodMoney, false)
@@ -52,7 +52,7 @@ local function setupPlayer(Player)
     Player.PlayerData.inventory = Player.PlayerData.items
     Player.PlayerData.identifier = Player.PlayerData.citizenid
     Player.PlayerData.name = ('%s %s'):format(Player.PlayerData.charinfo.firstname, Player.PlayerData.charinfo.lastname)
-    
+
     -- Add player methods FIRST before doing anything else
     RSGCore.Functions.AddPlayerMethod(Player.PlayerData.source, "AddItem", function(item, amount, slot, info)
         return Inventory.AddItem(Player.PlayerData.source, item, amount, info, slot)
@@ -88,11 +88,11 @@ local function setupPlayer(Player)
     -- Add starter items and money items
     Inventory.SetItem(Player.PlayerData.source, 'bread', 5)
     Inventory.SetItem(Player.PlayerData.source, 'water', 5)
-    
+
     -- Convert money to items if money items are enabled
     local cashDollars, cashCents = getParts(Player.PlayerData.money.cash)
     local bloodDollars, bloodCents = getParts(Player.PlayerData.money.bloodmoney)
-    
+
     if cashDollars > 0 then
         Inventory.SetItem(Player.PlayerData.source, 'dollar', cashDollars)
     end
@@ -159,6 +159,16 @@ SetTimeout(500, function()
         StopResource('rsg-weaponcomp')
     end
 
+    -- Auto-import items from RSGCore.Shared.Items to ox_inventory
+    if RSGCore.Shared and RSGCore.Shared.Items then
+        local ItemImporter = require 'modules.items.import'
+        local ignoreList = {
+            'weapon_', 'WEAPON_', -- Weapons are handled by weapons_RDR3.lua
+            'ammo_', 'AMMO_',     -- Ammo is handled by weapons_RDR3.lua
+        }
+        ItemImporter.ImportFromFramework(RSGCore.Shared.Items, 'RSGCore', ignoreList)
+    end
+
     for _, Player in pairs(RSGCore.Functions.GetRSGPlayers()) do setupPlayer(Player) end
 end)
 
@@ -190,9 +200,9 @@ end
 function server.syncInventory(inv)
     local player = server.GetPlayerFromId(inv.id)
     if not player or not player.Functions then return end -- Add safety check
-    
+
     player.Functions.SetPlayerData('items', inv.items)
-    
+
     local dollarCount = Inventory.GetItemCount(inv.id, 'dollar') or 0
     local centCount = Inventory.GetItemCount(inv.id, 'cent') or 0
     local bloodDollarCount = Inventory.GetItemCount(inv.id, 'blood_dollar') or 0
@@ -224,12 +234,12 @@ function server.buyLicense(inv, license)
     if player.PlayerData.metadata.licences[license.name] then
         return false, 'already_have'
     end
-    
+
     local totalMoney
     local dollarCount = Inventory.GetItemCount(inv.id, 'dollar') or 0
     local centCount = Inventory.GetItemCount(inv.id, 'cent') or 0
     totalMoney = calculateTotal(dollarCount, centCount)
-    
+
     if totalMoney < license.price then
         return false, 'can_not_afford'
     end
@@ -348,7 +358,7 @@ end)
 export('rsg-inventory.GetItemsByName', function(playerId, itemName)
     local items = Inventory.GetSlotsWithItem(playerId, itemName)
     if not items then return {} end
-    
+
     -- Convert to RSG format with compatibility props
     local result = {}
     for i, item in pairs(items) do
@@ -403,7 +413,7 @@ export('rsg-inventory.CreateShop', function(shopData)
         inventory = {},
         groups = shopData.groups,
     }
-    
+
     if shopData.items then
         for i, item in pairs(shopData.items) do
             oxShopData.inventory[i] = {
@@ -413,7 +423,7 @@ export('rsg-inventory.CreateShop', function(shopData)
             }
         end
     end
-    
+
     pendingShops[shopData.name] = oxShopData
     return true
 end)

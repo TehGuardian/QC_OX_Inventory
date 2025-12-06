@@ -1,5 +1,5 @@
 import { CaseReducer, PayloadAction } from '@reduxjs/toolkit';
-import { getTargetInventory, itemDurability } from '../helpers';
+import { getTargetInventory, itemDegradation, itemDurability } from '../helpers';
 import { Inventory, SlotWithItem, State } from '../typings';
 
 export const swapSlotsReducer: CaseReducer<
@@ -20,11 +20,13 @@ export const swapSlotsReducer: CaseReducer<
       ...targetInventory.items[toSlot.slot - 1],
       slot: fromSlot.slot,
       durability: itemDurability(toSlot.metadata, curTime),
+      degradation: itemDegradation(toSlot.metadata, curTime),
     },
     {
       ...sourceInventory.items[fromSlot.slot - 1],
       slot: toSlot.slot,
-      durability: itemDurability(fromSlot.metadata, curTime),
+      durability: itemDurability(toSlot.metadata, curTime),
+      degradation: itemDegradation(toSlot.metadata, curTime),
     },
   ];
 };

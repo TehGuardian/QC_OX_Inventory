@@ -1,19 +1,17 @@
-// RedM Theme Colors
 $mainColor: rgb(45, 45, 45);
 $textColor: #c1c2c5;
 
-// Custom RedM Fonts
 @font-face {
   font-family: Hapna;
-  src: url('./fonts/HapnaSlabSerif-DemiBold.ttf');
+  src: url('./fonts/HapnaSlabSerif-DemiBold.ttf'); 
 }
 @font-face {
   font-family: Catalogue;
-  src: url('./fonts/RDRCatalogueBold-Bold.ttf');
+  src: url('./fonts/RDRCatalogueBold-Bold.ttf'); 
 }
 @font-face {
   font-family: Redemption;
-  src: url('./fonts/Redemption.ttf');
+  src: url('./fonts/Redemption.ttf'); 
 }
 
 $mainFont: Roboto;
@@ -25,14 +23,13 @@ $secondaryColorHighlight: #33343F;
 $secondaryColorLight: rgba(0, 0, 0, 0.5);
 $secondaryColorDark: rgba(12, 12, 12, 0.8);
 
-$backgroundColor: rgba(0, 0, 0, 0.9);
+$backgroundColor:rgba(0, 0, 0, 0.9);
 $borderRadius: 0.25vh;
 
-// RedM Grid Sizing (smaller slots, larger gaps)
 $gridCols: 5;
 $gridRows: 5;
-$gridSize: 7.3vh;
-$gridGap: 3.7px;
+$gridSize: 8.8vh;
+$gridGap: 5px;
 $containerSize: calc(#{$gridRows} * #{$gridSize + 0.22vh} + #{$gridRows} * #{$gridGap});
 $containerSizeMinimal: calc(#{2} * #{$gridSize + 0.22vh} + #{2} * #{$gridGap});
 
@@ -72,7 +69,7 @@ code {
 p {
   margin: 0;
   padding: 0;
-  font-family: $secondFont;
+  font-family: $secondFont;  
 }
 
 input[type='number']::-webkit-inner-spin-button,
@@ -147,12 +144,11 @@ button:active {
   image-rendering: -webkit-optimize-contrast;
 }
 
-// RedM specific wrapper
-.rootInventory
+.rootInventory 
 {
   display:flex;
   flex-direction: column;
-
+  
   justify-content: center;
   align-items: center;
   -webkit-scrollbar: 3px !important;
@@ -163,7 +159,7 @@ button:active {
   background: url(./background_new_inventario.png);
   background-size: 100%;
   background-position: center;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat;    
   padding: 2vh 2.2vh;
   margin: 0 3vh;
   display:none;
@@ -192,10 +188,10 @@ button:active {
 
     padding: 0.5vh 2vh;
 
-    background: url(./background_new_inventario.png);
+    background: url(./background_actions.png);
     background-size: 100% 100%;
     background-position: center;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat;    
   }
 
   .inventory-control-input {
@@ -209,7 +205,7 @@ button:active {
     margin: 0.4vh;
     color: $textColor;
     font-family: $secondFont;
-
+    
     outline: none;
     border: none;
 
@@ -231,8 +227,8 @@ button:active {
     width: auto;
     margin: 0.8vh;
     color: $textColor;
-    font-family: $secondFont;
-
+    font-family: $secondFont;  
+  
     &:hover {
         background-color: $mainColor;
         opacity: 0.8;
@@ -356,7 +352,7 @@ button:active {
 }
 
 .inventory-grid-container::-webkit-scrollbar {
-  display: block;
+  display: block; 
   width: 3px;
 }
 
@@ -395,7 +391,7 @@ button:active {
   font-family: $secondFont;
   text-shadow: 0.1vh 0.1vh 0 rgba(0, 0, 0, 0.7);
   color: white;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 
@@ -417,22 +413,22 @@ button:active {
   align-items: center;
   z-index: 1;
 
-  opacity: 0.1;
+  opacity: 0.2;
   user-select: none;
   pointer-events: none;
 }
 
-.hotbar-slot-header-wrapper > .inventory-slot-number {
+// .hotbar-slot-header-wrapper > .inventory-slot-number {
+  
+//   font-size: 1.9vh;
+//   opacity: 0.6;
 
-  font-size: 1.5vh;
-  opacity: 0.6;
+//   justify-content: left;
+//   align-items: start;
 
-  justify-content: left;
-  align-items: start;
-
-  padding-left: .4em;
-  padding-top: .4em;
-}
+//   padding-left: .4em;
+//   padding-top: .4em;
+// }
 
 .item-slot-image {
   @extend .inventory-slot;
@@ -458,6 +454,13 @@ button:active {
   flex-direction: row;
   justify-content: center;
   align-items: center;
+
+  // background: url(./background_notifications.png);
+  // background-size: 100%;
+  // background-position: center;
+  // background-repeat: no-repeat;
+  
+  // padding: 20px 10px;
 
   gap: 2vh;
 }
@@ -485,10 +488,10 @@ button:active {
 
   span {
       font-weight: bold;
-      font-family: $secondFont;
+      font-family: $secondFont;  
 
       display: flex;
-      // color:black;
+      // color:black;   
       position:absolute;
       justify-content: center;
       align-items: center;
@@ -601,7 +604,7 @@ button:active {
 .hotbar-item-slot {
   @extend .inventory-slot;
   background-color: transparent;
-
+  
   background: url(../images/slot.png);
   background-size: contain;
   border: none;
@@ -644,7 +647,7 @@ button:active {
   color: white;
   // color: $textColor;
   // background-color: $secondaryColor;
-
+  
   text-transform: uppercase;
   text-align: right;
   border-top-left-radius: 0.25vh;
@@ -734,5 +737,22 @@ button:active {
 }
 
 .ui_removed {
-  color: rgb(199, 5, 4) !important;
+  color: #f22a19 !important;
+}
+
+.ammoTypeContainer {
+  position:absolute;
+
+  text-align: right;
+  font-weight: bold;
+
+  top: 10em;
+  right: 3em;
+
+  img {
+    opacity: 0.5;
+  }
+  .currentAmmo {
+    opacity: 1.0;
+  }
 }

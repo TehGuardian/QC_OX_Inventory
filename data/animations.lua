@@ -1,25 +1,3 @@
---[[
-╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                                               ║
-║                           🎭 OX INVENTORY - ANIMATION SYSTEM 🎭                                              ║
-║                                                                                                               ║
-╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                                               ║
-║  Define animations and props for item usage                                                                   ║
-║  Multi-Framework: RSG, VORP, QRCore, RedEM:RP                                                                 ║
-║                                                                                                               ║
-║  📋 ANIMATION PROPERTIES 📋                                                                                  ║
-║    • dict   Animation dictionary name                                                                         ║
-║    • clip   Animation clip/name                                                                               ║
-║                                                                                                               ║
-║  📋 PROP PROPERTIES 📋                                                                                       ║
-║    • model  Prop model hash                                                                                   ║
-║    • pos    Position offset vec3(x, y, z)                                                                     ║
-║    • rot    Rotation offset vec3(x, y, z)                                                                     ║
-║                                                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
---]]
-
 return {
 	anim = {
 		['eating'] = { dict = 'mp_player_inteat@burger', clip = 'mp_player_int_eat_burger_fp' },

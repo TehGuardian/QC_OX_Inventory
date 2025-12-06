@@ -3,15 +3,18 @@ if not lib then return end
 local Query = {
     SELECT_STASH = 'SELECT data FROM ox_inventory WHERE owner = ? AND name = ?',
     UPDATE_STASH = 'UPDATE ox_inventory SET data = ? WHERE owner = ? AND name = ?',
-    UPSERT_STASH =
-    'INSERT INTO ox_inventory (data, owner, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data)',
+
+    UPSERT_STASH = 'INSERT INTO ox_inventory (data, owner, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data)',
     INSERT_STASH = 'INSERT INTO ox_inventory (owner, name) VALUES (?, ?)',
-    SELECT_GLOVEBOX = 'SELECT plate, glovebox FROM `{vehicle_table}` WHERE `{vehicle_column}` = ?',
-    SELECT_TRUNK = 'SELECT plate, trunk FROM `{vehicle_table}` WHERE `{vehicle_column}` = ?',
-    SELECT_PLAYER = 'SELECT inventory FROM `{user_table}` WHERE `{user_column}` = ?',
+
+    SELECT_TRUNK = 'SELECT `{vehicle_column}`, trunk FROM `{vehicle_table}` WHERE `{vehicle_column}` = ?',
     UPDATE_TRUNK = 'UPDATE `{vehicle_table}` SET trunk = ? WHERE `{vehicle_column}` = ?',
+
+    SELECT_GLOVEBOX = 'SELECT `{vehicle_column}`, glovebox FROM `{vehicle_table}` WHERE `{vehicle_column}` = ?',
     UPDATE_GLOVEBOX = 'UPDATE `{vehicle_table}` SET glovebox = ? WHERE `{vehicle_column}` = ?',
+
     UPDATE_PLAYER = 'UPDATE `{user_table}` SET inventory = ? WHERE `{user_column}` = ?',
+    SELECT_PLAYER = 'SELECT inventory, weight, slots FROM `{user_table}` WHERE `{user_column}` = ? LIMIT 1',
 }
 
 Citizen.CreateThreadNow(function()
@@ -27,23 +30,21 @@ Citizen.CreateThreadNow(function()
         playerColumn = 'identifier'
         vehicleTable = 'owned_vehicles'
         vehicleColumn = 'plate'
+    elseif shared.framework == 'qb' then
+        playerTable = 'players'
+        playerColumn = 'citizenid'
+        vehicleTable = 'player_vehicles'
+        vehicleColumn = 'plate'
     elseif shared.framework == 'nd' then
         playerTable = 'nd_characters'
         playerColumn = 'charid'
         vehicleTable = 'nd_vehicles'
-        vehicleColumn = 'id'
-    elseif shared.framework == 'qbx' then
-        playerTable = 'players'
-        playerColumn = 'citizenid'
-        vehicleTable = 'player_vehicles'
         vehicleColumn = 'id'
     elseif shared.framework == 'rsg' then
         playerTable = 'players'
         playerColumn = 'citizenid'
         vehicleTable = 'player_horses'
         vehicleColumn = 'id'
-    else
-        return
     end
 
     for k, v in pairs(Query) do
@@ -128,8 +129,10 @@ end)
 db = {}
 
 function db.loadPlayer(identifier)
-    local inventory = MySQL.prepare.await(Query.SELECT_PLAYER, { identifier }) --[[@as string?]]
-    return inventory and json.decode(inventory)
+    local res = MySQL.single.await(Query.SELECT_PLAYER, { identifier }) --[[@as string?]]
+    local inventory = res?.items
+
+    return { items = inventory and json.decode(inventory), slots = res?.slots, weight = res?.weight}
 end
 
 function db.savePlayer(owner, inventory)
@@ -273,7 +276,7 @@ function db.saveInventories(players, trunks, gloveboxes, stashes, total)
                         end
                     end
 
-                    shared.info(saveStr:format(affectedRows, total[4], 'stashes', (os.nanotime() - start) / 1e6))
+                    shared.info(saveStr:format('stashes', affectedRows, total[4], (os.nanotime() - start) / 1e6))
                 end
             end)
         end

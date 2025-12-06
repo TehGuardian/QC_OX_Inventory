@@ -5,14 +5,45 @@ function server.hasGroup(inv, group)
 	if type(group) == 'table' then
 		for name, rank in pairs(group) do
 			local groupRank = inv.player.groups[name]
+
 			if groupRank and groupRank >= (rank or 0) then
 				return name, groupRank
+			end
+
+			local gradePermission = type(rank) == "string" and rank or nil
+			local className = type(name) == 'string' and name or gradePermission
+
+			if className == gradePermission then
+				gradePermission = nil
+			end	
+
+			if Business.hasClassePermission(inv.player.citizenId, className, gradePermission) then
+				return className, gradePermission
+			end
+
+			if API.IsPlayerAceAllowedGroup( inv.player.source, className ) then
+				return className, gradePermission
 			end
 		end
 	else
 		local groupRank = inv.player.groups[group]
 		if groupRank then
 			return group, groupRank
+		end
+
+		local gradePermission = type(groupRank) == "string" and groupRank or nil
+		local className = type(group) == 'string' and group or gradePermission
+
+		if className == gradePermission then
+			gradePermission = nil
+		end	
+		
+		if Business.hasClassePermission(inv.player.citizenId, className, gradePermission) then
+			return className, gradePermission
+		end
+	
+		if API.IsPlayerAceAllowedGroup( inv.player.source, className ) then
+			return className, gradePermission
 		end
 	end
 end
@@ -27,6 +58,7 @@ function server.setPlayerData(player)
 		source = player.source,
 		name = player.name,
 		groups = player.groups or {},
+		citizenId = player.citizenId,
 		sex = player.sex,
 		dateofbirth = player.dateofbirth,
 	}
@@ -51,8 +83,9 @@ end
 local success, result = pcall(lib.load, ('modules.bridge.%s.server'):format(shared.framework))
 
 if not success then
+    lib.print.error(result)
     lib = nil
-    error(result, 0)
+    return
 end
 
 if server.convertInventory then exports('ConvertItems', server.convertInventory) end

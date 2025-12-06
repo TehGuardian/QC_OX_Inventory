@@ -69,11 +69,12 @@ local function newItem(data)
         end
 	end
 
+
     ::continue::
 	ItemList[data.name] = data
 end
 
-for type, data in pairs(lib.load('data.weapons') or {}) do
+for type, data in pairs(lib.load(string.format('data.weapons_%s', IS_GTAV and "GTAV" or "RDR3"))) do
 	for k, v in pairs(data) do
 		v.name = k
 		v.close = type == 'Ammo' and true or false
@@ -86,6 +87,45 @@ for type, data in pairs(lib.load('data.weapons') or {}) do
 			v.stack = v.throwable and true or false
 			v.durability = v.durability or 0.05
 			v.weapon = true
+
+			if IS_RDR3 then
+				if v.type == 'WeaponGun' then
+					v.buttons =
+					{
+						{
+							label = locale('inspect_weapon'),
+							action = function(slot)
+								TriggerEvent('ox_inventory:weaponInspectUsed', PlayerData.inventory[slot])
+							end
+						},
+						-- {
+						-- 	label = locale('unload_ammo'),
+						-- 	action = function(slot)
+						-- 		TriggerEvent('ox_inventory:weaponUnloadAmmo', PlayerData.inventory[slot])
+						-- 	end
+						-- },
+					}
+
+					if string.find(string.lower(v.name), "revolver") or string.find(string.lower(v.name), "pistol") then
+						v.buttons =
+						{
+							v.buttons[1],
+							{
+								label = locale('left_holster'),
+								action = function(slot)
+									TriggerEvent('ox_inventory:ReplaceAttachPoint', PlayerData.inventory[slot], 2)
+								end
+							},
+							{
+								label = locale('right_holster'),
+								action = function(slot)
+									TriggerEvent('ox_inventory:ReplaceAttachPoint', PlayerData.inventory[slot], 3)
+								end
+							}
+						}
+					end
+				end
+			end
 		else
 			v.stack = true
 		end
@@ -106,13 +146,46 @@ for type, data in pairs(lib.load('data.weapons') or {}) do
 	end
 end
 
-for k, v in pairs(lib.load('data.items') or {}) do
-	v.name = k
-	local success, response = pcall(newItem, v)
 
-    if not success then
-        warn(('An error occurred while creating item "%s" callback!\n^1SCRIPT ERROR: %s^0'):format(k, response))
-    end
+local itemsListByType =
+{
+	'drugs',
+	'fishing',
+	'foods',
+	'general',
+	'herbs',
+	'imported', -- Auto-imported items from framework (RSGCore, QBCore, etc.)
+	'meats',
+	'naturals',
+	'provisions',
+	'tonics',
+	'tools',
+	'valuables'
+}
+
+if IS_GTAV then
+	for k, v in pairs(lib.load( "data.items_GTAV" )) do
+		v.name = k
+		local success, response = pcall(newItem, v)
+
+		if not success then
+			warn(('An error occurred while creating item "%s" callback!\n^1SCRIPT ERROR: %s^0'):format(k, response))
+		end
+	end
+end
+
+if IS_RDR3 then
+	for _, type in pairs(itemsListByType) do
+		for k, v  in pairs( lib.load( ("data.items.%s"):format(type)) ) do
+			v.name = k
+
+			local success, response = pcall(newItem, v)
+
+			if not success then
+				warn(('An error occurred while creating item "%s" callback!\n^1SCRIPT ERROR: %s^0'):format(k, response))
+			end
+		end
+	end
 end
 
 ItemList.cash = ItemList.money

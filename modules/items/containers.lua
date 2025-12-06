@@ -53,16 +53,44 @@ end
 
 exports('setContainerProperties', setContainerProperties)
 
-setContainerProperties('paperbag', {
-	slots = 5,
+-- Load container definitions from data/containers.lua if it exists
+local containerData = lib.load('data.containers')
+
+if containerData and type(containerData) == 'table' then
+	for itemName, properties in pairs(containerData) do
+		setContainerProperties(itemName, properties)
+	end
+end
+
+-- Keep old ammo box containers for backwards compatibility
+setContainerProperties('box_ammunition', {
+	slots = 10,
 	maxWeight = 1000,
-	blacklist = { 'testburger' }
+	whitelist = {
+		['AMMO_REVOLVER'] = true,
+		['AMMO_REVOLVER_EXPRESS_EXPLOSIVE'] = true,
+		['AMMO_PISTOL'] = true,
+		['AMMO_SHOTGUN'] = true,
+		['AMMO_REPEATER'] = true,
+		['AMMO_RIFLE'] = true
+	}
 })
 
-setContainerProperties('pizzabox', {
+setContainerProperties('box_varmint', {
 	slots = 5,
-	maxWeight = 1000,
-	whitelist = { 'pizza' }
+	maxWeight = 3000,
+	whitelist = {
+		['AMMO_22'] = true,
+	}
+})
+
+setContainerProperties('box_revolver', {
+	slots = 5,
+	maxWeight = 3000,
+	whitelist = {
+		['AMMO_REVOLVER'] = true,
+		['AMMO_REVOLVER_EXPRESS_EXPLOSIVE'] = true
+	}
 })
 
 return containers

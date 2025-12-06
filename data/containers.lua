@@ -52,4 +52,18 @@ return {
         maxWeight = 50000,
     },
 
+    -- Paper Bag (example with blacklist)
+    paperbag = {
+        slots = 5,
+        maxWeight = 1000,
+        blacklist = { 'testburger' }
+    },
+
+    -- Pizza Box (example with whitelist)
+    pizzabox = {
+        slots = 5,
+        maxWeight = 1000,
+        whitelist = { 'pizza' }
+    },
+
 }

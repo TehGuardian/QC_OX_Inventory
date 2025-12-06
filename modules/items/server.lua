@@ -28,12 +28,14 @@ local function getItem(_, name)
 
     name = name:lower()
 
-    if name:sub(0, 7) == 'weapon_' then
+    if name:sub(0, 7) == 'weapon_' or name:sub(0, 5) == 'ammo_' then
         name = name:upper()
     end
 
     return ItemList[name]
 end
+
+exports('API_Items', function() return ItemList end)
 
 setmetatable(Items --[[@as table]], {
 	__call = getItem
@@ -50,8 +52,6 @@ local Inventory
 
 CreateThread(function()
 	Inventory = require 'modules.inventory.server'
-
-    if not lib then return end
 
 	if shared.framework == 'esx' then
 		local success, items = pcall(MySQL.query.await, 'SELECT * FROM items')
@@ -79,15 +79,15 @@ CreateThread(function()
 
 				---@todo separate into functions for reusability, properly handle nil values
 				local itemFormat = [[
+					[%q] = {
+						label = %q,
+						weight = %s,
+						stack = %s,
+						close = %s,
+						description = %q
+					},
+				]]
 
-	[%q] = {
-		label = %q,
-		weight = %s,
-		stack = %s,
-		close = %s,
-		description = %q
-	},
-]]
 				local fileSize = #file
 
 				for _, item in pairs(dump) do
@@ -110,6 +110,109 @@ CreateThread(function()
 			end
 
 			shared.info('Database contains', #items, 'items.')
+		end
+
+		Wait(500)
+
+	elseif shared.framework == 'qb' then
+		local QBCore = exports['qb-core']:GetCoreObject()
+		local items = QBCore.Shared.Items
+
+		if items and table.type(items) ~= 'empty' then
+			local dump = {}
+			local count = 0
+			local ignoreList = {
+				"weapon_",
+				"pistol_",
+				"pistol50_",
+				"revolver_",
+				"smg_",
+				"combatpdw_",
+				"shotgun_",
+				"rifle_",
+				"carbine_",
+				"gusenberg_",
+				"sniper_",
+				"snipermax_",
+				"tint_",
+				"_ammo"
+			}
+
+			local function checkIgnoredNames(name)
+				for i = 1, #ignoreList do
+					if string.find(name, ignoreList[i]) then
+						return true
+					end
+				end
+				return false
+			end
+
+			for k, item in pairs(items) do
+				-- Explain why this wouldn't be table to me, because numerous people have been getting "attempted to index number" here
+				if type(item) == 'table' then
+					-- Some people don't assign the name property, but it seemingly always matches the index anyway.
+					if not item.name then item.name = k end
+
+					if not ItemList[item.name] and not checkIgnoredNames(item.name) then
+						item.close = item.shouldClose == nil and true or item.shouldClose
+						item.stack = not item.unique and true
+						item.description = item.description
+						item.weight = item.weight or 0
+						dump[k] = item
+						count += 1
+					end
+				end
+			end
+
+			if table.type(dump) ~= 'empty' then
+				local file = {string.strtrim(LoadResourceFile(shared.resource, 'data/items.lua'))}
+				file[1] = file[1]:gsub('}$', '')
+
+				---@todo separate into functions for reusability, properly handle nil values
+				local itemFormat = [[
+
+	[%q] = {
+		label = %q,
+		weight = %s,
+		stack = %s,
+		close = %s,
+		description = %q,
+		client = {
+			status = {
+				hunger = %s,
+				thirst = %s,
+				stress = %s
+			},
+			image = %q,
+		}
+	},
+]]
+
+				local fileSize = #file
+
+				for _, item in pairs(dump) do
+					if not ItemList[item.name] then
+						fileSize += 1
+
+						---@todo cry
+						local itemStr = itemFormat:format(item.name, item.label, item.weight, item.stack, item.close, item.description or 'nil', item.hunger or 'nil', item.thirst or 'nil', item.stress or 'nil', item.image or 'nil')
+						-- temporary solution for nil values
+						itemStr = itemStr:gsub('[%s]-[%w]+ = "?nil"?,?', '')
+						-- temporary solution for empty status table
+						itemStr = itemStr:gsub('[%s]-[%w]+ = %{[%s]+%},?', '')
+						-- temporary solution for empty client table
+						itemStr = itemStr:gsub('[%s]-[%w]+ = %{[%s]+%},?', '')
+						file[fileSize] = itemStr
+						ItemList[item.name] = item
+					end
+				end
+
+				file[fileSize+1] = '}'
+
+				SaveResourceFile(shared.resource, 'data/items.lua', table.concat(file), -1)
+				shared.info(count, 'items have been copied from the QBCore.Shared.Items.')
+				shared.info('You should restart the resource to load the new items.')
+			end
 		end
 
 		Wait(500)
@@ -175,7 +278,31 @@ function Items.Metadata(inv, item, metadata, count)
 
 	if item.weapon then
 		if type(metadata) ~= 'table' then metadata = {} end
-		if not metadata.durability then metadata.durability = 100 end
+		--- RDR3 Weapons are using degradation system
+		if IS_RDR3 then
+			local degradation = metadata.degradation
+
+			if degradation == nil or degradation < 0 then
+				metadata.degradation = 0
+			end
+
+			if not metadata.soot then
+				metadata.soot = 0
+			end
+
+			if not metadata.dirt then
+				metadata.dirt = 0
+			end
+
+			if not metadata.damage then
+				metadata.damage = 0
+			end
+		end
+
+		if IS_GTAV then
+			if not metadata.durability then metadata.durability = 100 end
+		end
+
 		if not metadata.ammo and item.ammoname then metadata.ammo = 0 end
 		if not metadata.components then metadata.components = {} end
 
@@ -248,6 +375,7 @@ end
 ---@param ostime number
 ---Validate (and in some cases convert) item metadata when an inventory is being loaded.
 function Items.CheckMetadata(metadata, item, name, ostime)
+
 	if metadata.bag then
 		metadata.container = metadata.bag
 		metadata.size = Items.containers[name]?.size or {5, 1000}
@@ -265,25 +393,47 @@ function Items.CheckMetadata(metadata, item, name, ostime)
 	end
 
 	if item.weapon then
+
+		local degradation = metadata.degradation
+
+		if degradation == nil or degradation < 0 then
+			metadata.degradation = 0
+		end
+
+		if not metadata.soot then
+			metadata.soot = 0
+		end
+
+		if not metadata.dirt then
+			metadata.dirt = 0
+		end
+
+		if not metadata.damage then
+			metadata.damage = 0
+		end
+
 		if metadata.components then
-			if table.type(metadata.components) == 'array' then
-				for i = #metadata.components, 1, -1 do
-					if not ItemList[metadata.components[i]] then
-						table.remove(metadata.components, i)
+			local tableSize = #metadata.components
+			if IS_GTAV then
+				if tableSize >= 1 then
+					for i = tableSize, 1, -1 do
+						if not ItemList[metadata.components[i]] then
+							table.remove(metadata.components, i)
+						end
 					end
-				end
-			else
-				local components = {}
-				local size = 0
+				else
+					local components = {}
+					local size = 0
 
-				for _, component in pairs(metadata.components) do
-					if component and ItemList[component] then
-						size += 1
-						components[size] = component
+					for _, component in pairs(metadata.components) do
+						if component and ItemList[component] then
+							size += 1
+							components[size] = component
+						end
 					end
-				end
 
-				metadata.components = components
+					metadata.components = components
+				end
 			end
 		end
 
@@ -291,9 +441,14 @@ function Items.CheckMetadata(metadata, item, name, ostime)
 			metadata.serial = nil
 		end
 
-		if metadata.specialAmmo and type(metadata.specialAmmo) ~= 'string' then
-			metadata.specialAmmo = nil
+		if not metadata.customAmmo then
+			metadata.customAmmo = {}
 		end
+
+		if item.ammoname and not metadata.customAmmo[item.ammoname:lower()] then
+			metadata.customAmmo[item.ammoname:lower()] = 0
+		end
+
 	end
 
 	return metadata
@@ -334,8 +489,6 @@ function Items.UpdateDurability(inv, slot, item, value, ostime)
     }, true)
 end
 
----@deprecated
----Use the 'ox_inventory:usedItem' event or the 'usingItem' or 'buyItem' hooks
 local function Item(name, cb)
 	local item = ItemList[name]
 
@@ -348,23 +501,37 @@ end
 -- Serverside item functions
 -----------------------------------------------------------------------------------------------
 
--- Item('testburger', function(event, item, inventory, slot, data)
--- 	if event == 'usingItem' then
--- 		if Inventory.GetItem(inventory, item, inventory.items[slot].metadata, true) > 0 then
--- 			-- if we return false here, we can cancel item use
--- 			return {
--- 				inventory.label, event, 'external item use poggies'
--- 			}
--- 		end
-
--- 	elseif event == 'usedItem' then
--- 		print(('%s just ate a %s from slot %s'):format(inventory.label, item.label, slot))
-
--- 	elseif event == 'buying' then
--- 		print(data.id, data.coords, json.encode(data.items[slot], {indent=true}))
--- 	end
--- end)
-
 -----------------------------------------------------------------------------------------------
+Item('bag_container', function(event, item, inventory, slot, data)
+
+    local playerId = inventory.id
+    local User   = API.GetUserFromSource(playerId)
+	local characterId = User:GetCharacterId()
+
+    if event == 'buying' then
+        return true
+    end
+
+    if event == 'usingItem' then
+		TriggerEvent("ox_inventory:addAdditionalSlots", playerId, characterId)
+	end
+
+	
+    if event == 'usedItem' then
+	end
+
+	return false
+end)
+
+exports('CreateUseableItem', function (itemName, cb)
+	Item(itemName, function(event, item, inventory, slot, data)
+		if event == 'usingItem' then
+			if Inventory.GetItem(inventory, item, inventory.items[slot].metadata, true) > 0 then
+				cb(inventory.id, inventory.items[slot])
+			end
+		end
+	end)
+end)
+
 
 return Items

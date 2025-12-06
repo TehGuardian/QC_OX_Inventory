@@ -1,5 +1,5 @@
 import { CaseReducer, PayloadAction } from '@reduxjs/toolkit';
-import { getItemData, itemDurability } from '../helpers';
+import { getItemData, itemDegradation, itemDurability } from '../helpers';
 import { Items } from '../store/items';
 import { Inventory, State } from '../typings';
 
@@ -27,6 +27,7 @@ export const setupInventoryReducer: CaseReducer<
           getItemData(item.name);
         }
 
+        item.degradation = itemDegradation(item.metadata, curTime);
         item.durability = itemDurability(item.metadata, curTime);
         return item;
       }),
@@ -46,11 +47,11 @@ export const setupInventoryReducer: CaseReducer<
           getItemData(item.name);
         }
 
+        item.degradation = itemDegradation(item.metadata, curTime);
         item.durability = itemDurability(item.metadata, curTime);
         return item;
       }),
     };
 
-  state.shiftPressed = false;
   state.isBusy = false;
 };

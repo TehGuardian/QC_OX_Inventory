@@ -89,5 +89,8 @@
   "crafting_bench": "Crafting Bench",
   "open_crafting_bench": "Open Crafting Bench",
   "not_enough_durability": "%s does not have enough durability",
-  "storage": "Storage"
+  "storage": "Storage",
+  "inspect_weapon": "Inspect weapon",
+  "left_holster": "Left Holster",
+  "right_holster": "Right holster"
 }

@@ -10,7 +10,7 @@ end
 -- Do not modify this file at all. This isn't a "config" file. You want to change
 -- resource settings? Use convars like you were told in the documentation.
 -- You did read the docs, right? Probably not, if you're here.
--- https://coxdocs.dev/ox_inventory#config
+-- https://overextended.dev/ox_inventory#config
 
 shared = {
     resource = GetCurrentResourceName(),
@@ -19,12 +19,36 @@ shared = {
     playerweight = GetConvarInt('inventory:weight', 30000),
     target = GetConvarInt('inventory:target', 0) == 1,
     police = json.decode(GetConvar('inventory:police', '["police", "sheriff"]')),
-    networkdumpsters = GetConvarInt('inventory:networkdumpsters', 0) == 1,
-    persistent_items = GetConvarInt('inventory:persistent_items', 0) == 1 -- RedM only
+    persistent_items = GetConvarInt('inventory:persistent_items', 1) == 0 -- for REDM only
 }
 
-shared.dropslots = GetConvarInt('inventory:dropslots', shared.playerslots)
-shared.dropweight = GetConvarInt('inventory:dropweight', shared.playerweight)
+shared.prime = {
+    { Group = "user",           MaxWeight = 25000, MaxSlots = 25 },
+
+    { Group = "relaunch",       MaxWeight = 40000, MaxSlots = 30 },
+
+    { Group = "bronze",         MaxWeight = 40000, MaxSlots = 30 },
+    { Group = "renewbronze",   MaxWeight = 40000, MaxSlots = 30 },
+
+    { Group = "silver",         MaxWeight = 50000, MaxSlots = 40 },
+    { Group = "renewsilver",   MaxWeight = 50000, MaxSlots = 40 },
+
+    { Group = "gold",           MaxWeight = 60000, MaxSlots = 40 },
+    { Group = "renewgold",     MaxWeight = 60000, MaxSlots = 40 },
+
+    { Group = "platinum",       MaxWeight = 60000, MaxSlots = 45 },
+    { Group = "renewplatinum", MaxWeight = 60000, MaxSlots = 45 },
+
+    { Group = "diamond",        MaxWeight = 70000, MaxSlots = 50 },
+    { Group = "renewdiamond",  MaxWeight = 70000, MaxSlots = 50 },
+
+    { Group = "royalty",        MaxWeight = 70000, MaxSlots = 50 },
+    { Group = "renewroyalty",  MaxWeight = 70000, MaxSlots = 50 },
+
+    { Group = "staff",          MaxWeight = 70000, MaxSlots = 50 },
+    { Group = "admin",          MaxWeight = 70000, MaxSlots = 50 },
+    { Group = "moderator",      MaxWeight = 70000, MaxSlots = 50 },
+}
 
 do
     if type(shared.police) == 'string' then
@@ -34,7 +58,7 @@ do
     local police = table.create(0, shared.police and #shared.police or 0)
 
     for i = 1, #shared.police do
-        police[shared.police[i]] = 0
+        table.insert(police, shared.police[i])
     end
 
     shared.police = police
@@ -42,6 +66,7 @@ end
 
 if IsDuplicityVersion() then
     IS_RDR3 = GetConvar('gamename') == 'rdr3'
+    IS_GTAV = not IS_RDR3
 
     server = {
         bulkstashsave = GetConvarInt('inventory:bulkstashsave', 1) == 1,
@@ -49,10 +74,10 @@ if IsDuplicityVersion() then
         randomprices = GetConvarInt('inventory:randomprices', 0) == 1,
         randomloot = GetConvarInt('inventory:randomloot', 1) == 1,
         evidencegrade = GetConvarInt('inventory:evidencegrade', 2),
-        trimplate = GetConvarInt('inventory:trimplate', 1) == 1,
+        trimplate = GetConvarInt('inventory:trimplate', 0) == 1,
         vehicleloot = json.decode(GetConvar('inventory:vehicleloot', [[
 			[
-				["sprunk", 1, 1],
+				["cola", 1, 1],
 				["water", 1, 1],
 				["garbage", 1, 2, 50],
 				["panties", 1, 1, 5],
@@ -79,6 +104,8 @@ if IsDuplicityVersion() then
     end
 else
     IS_RDR3 = GetGameName() == 'redm'
+    IS_GTAV = not IS_RDR3
+
     PlayerData = {}
     client = {
         autoreload = GetConvarInt('inventory:autoreload', 0) == 1,
@@ -86,20 +113,17 @@ else
         keys = json.decode(GetConvar('inventory:keys', '')) or { 'F2', 'K', 'TAB' },
         enablekeys = json.decode(GetConvar('inventory:enablekeys', '[249]')),
         aimedfiring = GetConvarInt('inventory:aimedfiring', 0) == 1,
-        giveplayerlist = GetConvarInt('inventory:giveplayerlist', 0) == 1,
+        giveplayerlist = GetConvarInt('inventory:giveplayerlist', 1) == 1,
         weaponanims = GetConvarInt('inventory:weaponanims', 1) == 1,
         itemnotify = GetConvarInt('inventory:itemnotify', 1) == 1,
-        weaponnotify = GetConvarInt('inventory:weaponnotify', 1) == 1,
+        weaponnotify = GetConvarInt('inventory:weaponnotify', 0) == 1,
         imagepath = GetConvar('inventory:imagepath', 'nui://ox_inventory/web/images'),
-        dropprops = GetConvarInt('inventory:dropprops', IS_RDR3 and 1 or 0) == 1,
-        dropmodel = joaat(GetConvar('inventory:dropmodel', IS_RDR3 and 'p_bag01x' or 'prop_med_bag_01b')),
+        dropprops = GetConvarInt('inventory:dropprops', 0) == 1,
+        dropmodel = joaat(GetConvar('inventory:dropmodel', 'prop_med_bag_01b')),
         weaponmismatch = GetConvarInt('inventory:weaponmismatch', 1) == 1,
         ignoreweapons = json.decode(GetConvar('inventory:ignoreweapons', '[]')),
         suppresspickups = GetConvarInt('inventory:suppresspickups', 1) == 1,
-        disableweapons = IS_RDR3 and false or (GetConvarInt('inventory:disableweapons', 0) == 1),
-        weaponWheel = IS_RDR3 and (GetConvarInt('inventory:weaponWheel', 0) == 1) or nil,
-        disablesetupnotification = GetConvarInt('inventory:disablesetupnotification', 0) == 1,
-        enablestealcommand = GetConvarInt('inventory:enablestealcommand', 1) == 1,
+        shopPrompt = GetConvarInt('inventory:shopprompt', 1) == 1
     }
 
     local ignoreweapons = table.create(0, (client.ignoreweapons and #client.ignoreweapons or 0) + 3)
@@ -116,49 +140,11 @@ else
     ignoreweapons[`WEAPON_HOSE`] = true
 
     client.ignoreweapons = ignoreweapons
-
-    local fallbackmarker = {
-        type = 0,
-        colour = {150, 150, 150},
-        scale = {0.5, 0.5, 0.5}
-    }
-
-    client.shopmarker = json.decode(GetConvar('inventory:shopmarker', [[
-        {
-            "type": 29,
-            "colour": [30, 150, 30],
-            "scale": [0.5, 0.5, 0.5]
-        }
-    ]])) or fallbackmarker
-
-    client.evidencemarker = json.decode(GetConvar('inventory:evidencemarker', [[
-        {
-            "type": 2,
-            "colour": [30, 30, 150],
-            "scale": [0.3, 0.2, 0.15]
-        }
-    ]])) or fallbackmarker
-
-    client.craftingmarker = json.decode(GetConvar('inventory:craftingmarker', [[
-        {
-            "type": 2,
-            "colour": [150, 150, 30],
-            "scale": [0.3, 0.2, 0.15]
-        }
-    ]])) or fallbackmarker
-
-    client.dropmarker = json.decode(GetConvar('inventory:dropmarker', [[
-        {
-            "type": 2,
-            "colour": [150, 30, 30],
-            "scale": [0.3, 0.2, 0.15]
-        }
-    ]])) or fallbackmarker
 end
 
 function shared.print(...) print(string.strjoin(' ', ...)) end
 
-function shared.info(...) lib.print.info(string.strjoin(' ', ...)) end
+function shared.info(...) shared.print('^2[info]^7', ...) end
 
 ---Throws a formatted type error.
 ---```lua
@@ -229,7 +215,7 @@ end
 
 if not LoadResourceFile(shared.resource, 'web/build/index.html') then
     return spamError(
-        'UI has not been built, refer to the documentation or download a release build.\n	^3https://coxdocs.dev/ox_inventory^0')
+        'UI has not been built, refer to the documentation or download a release build.\n	^3https://overextended.dev/ox_inventory^0')
 end
 
 -- No we're not going to support qtarget any longer.

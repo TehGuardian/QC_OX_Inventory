@@ -108,6 +108,23 @@ export const getTargetInventory = (
     : state.leftInventory,
 });
 
+export const itemDegradation = (metadata: any, curTime: number) => {
+  // sorry dunak
+  // it's ok linden i fix inventory
+  if (metadata?.degradation === undefined) return;
+
+  let degradation = (metadata.degradation * 100);
+
+  degradation = -(degradation) + 100;
+
+  if (degradation > 100 && metadata.degrade)
+    degradation = ((metadata.degradation - curTime) / (60 * metadata.degrade)) * 100;
+
+  if (degradation < 0) degradation = 0;
+  
+  return degradation;
+};
+
 export const itemDurability = (metadata: any, curTime: number) => {
   // sorry dunak
   // it's ok linden i fix inventory
