@@ -50,3 +50,5 @@ files {
     'data/*.lua',
     'data/items/*.lua',
 }
+
+provide 'rsg-inventory' -- For compatibility with rsg-inventory
